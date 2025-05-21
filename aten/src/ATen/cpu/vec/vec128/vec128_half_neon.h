@@ -619,6 +619,7 @@ Vectorized<c10::Half> inline fmsub(
 #else
   return a * b - c;
 #endif
+}
 
 template <>
 Vectorized<c10::Half> inline fnmsub(
