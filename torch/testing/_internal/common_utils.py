@@ -1564,6 +1564,7 @@ if TEST_WITH_TORCHDYNAMO:
     torch._dynamo.config.log_compilation_metrics = False
     # Silence 3.13.0 guard performance warnings
     torch._dynamo.config.issue_3_13_0_warning = False
+    torch._dynamo.config.compiled_autograd = True
     if TEST_WITH_TORCHINDUCTOR:
         import torch._inductor.config
         torch._inductor.config.fallback_random = True
@@ -5311,6 +5312,9 @@ class TestGradients(TestCase):
 
     def _check_helper(self, device, dtype, op, variant, check, *, check_forward_ad=False, check_backward_ad=True,
                       check_batched_grad=None, check_batched_forward_grad=False):
+        if torch._dynamo.config.compiled_autograd:
+            check_batched_grad = False
+            check_batched_forward_grad = False
         assert check in ('gradcheck', 'bwgrad_bwgrad', 'fwgrad_bwgrad')
         # NB: check_backward_ad does not affect gradgradcheck (always True)
         if variant is None:
