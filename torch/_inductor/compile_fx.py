@@ -858,7 +858,11 @@ def _compile_fx_inner(
                 ),
             )
             mb_compiled_graph = fx_codegen_and_compile(
-                gm, example_inputs, inputs_to_check, **graph_kwargs
+                gm,
+                example_inputs,
+                inputs_to_check,
+                model_name=config.aot_inductor.model_name_for_generated_files,
+                **graph_kwargs,
             )
 
         # CACHE MISS: Compile the graph and save to cache
@@ -869,7 +873,11 @@ def _compile_fx_inner(
             TritonBundler.begin_compile()
             try:
                 mb_compiled_graph = fx_codegen_and_compile(
-                    gm, example_inputs, inputs_to_check, **graph_kwargs
+                    gm,
+                    example_inputs,
+                    inputs_to_check,
+                    model_name=config.aot_inductor.model_name_for_generated_files,
+                    **graph_kwargs,
                 )
                 assert mb_compiled_graph is not None
                 mb_compiled_graph._time_taken_ns = time.time_ns() - start_time
@@ -1061,6 +1069,7 @@ class _InProcessFxCompile(FxCompile):
         example_inputs: Sequence[InputType],
         inputs_to_check: Sequence[int],
         graph_kwargs: _CompileFxKwargs,
+        model_name: Optional[str] = None,
     ) -> OutputCode:
         """
         Generates the OutputCode from the GraphModule and example_inputs.
@@ -1395,6 +1404,7 @@ class _InProcessFxCompile(FxCompile):
                                             )
                                         )
                                     ],
+                                    model_name=model_name,
                                 )
                         else:
                             compiled_module = graph.compile_to_module()
@@ -1495,6 +1505,7 @@ def fx_codegen_and_compile(
     # This is derivable from the other inputs to this function, but we pass it
     # in explicitly because it's nontrivial to compute
     inputs_to_check: Sequence[int],
+    model_name: Optional[str] = None,
     **graph_kwargs: Unpack[_CompileFxKwargs],
 ) -> OutputCode:
     scheme: FxCompile
@@ -1519,7 +1530,9 @@ def fx_codegen_and_compile(
         )
         scheme = _AsyncFxCompile(scheme)
 
-    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+    return scheme.codegen_and_compile(
+        gm, example_inputs, inputs_to_check, graph_kwargs, model_name=model_name
+    )
 
 
 def get_input_idxs_to_check(
