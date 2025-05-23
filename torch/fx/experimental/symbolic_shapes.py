@@ -1305,7 +1305,7 @@ def _static_eval_sym_bool(x: SymBool) -> Optional[bool]:
         return None
 
 
-def statically_known_true(x: BoolLikeType) -> bool:
+def statically_known_true(x: BoolLikeType, return_val: bool = False) -> bool:
     """
     Returns True if x can be simplified to a constant and is true.
 
@@ -1322,7 +1322,7 @@ def statically_known_true(x: BoolLikeType) -> bool:
 
     result = _static_eval_sym_bool(x)
     if result is None:
-        return False
+        return return_val
 
     return result
 
