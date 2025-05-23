@@ -37,6 +37,7 @@ from torch.nn import functional as F
 from torch.testing._internal.common_cuda import TEST_MULTIGPU
 from torch.testing._internal.common_utils import (
     instantiate_parametrized_tests,
+    make_dynamo_test,
     parametrize,
 )
 
