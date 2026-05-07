@@ -7,6 +7,14 @@
 ## Overview
 ```{eval-rst}
 .. automodule:: torch.profiler
+
+.. currentmodule:: torch.profiler.profiler
+
+.. autofunction:: schedule
+
+.. autofunction:: supported_activities
+
+.. autofunction:: tensorboard_trace_handler
 ```
 
 ## API Reference
