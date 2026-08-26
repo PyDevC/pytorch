@@ -190,7 +190,7 @@ Tensor& range_out_no_step(const Scalar& start, const Scalar& end, Tensor& result
 }
 
 Tensor& arange_out(const Scalar& start, const Scalar& end, const Scalar& step, Tensor& result) {
-  AT_DISPATCH_ALL_TYPES_AND2(kHalf, kBFloat16, result.scalar_type(), "arange_cpu", [&]() {
+  AT_DISPATCH_ALL_TYPES_AND_COMPLEX_AND2(kHalf, kBFloat16, result.scalar_type(), "arange_cpu", [&]() {
     int64_t size = compute_arange_size<scalar_t>(start, end, step);
     int64_t numel = result.numel();
 

@@ -19,27 +19,46 @@ namespace {
 using namespace vec;
 
 void arange_kernel(TensorIterator& iter, const Scalar& scalar_start, const Scalar& scalar_steps, const Scalar& scalar_step) {
-  AT_DISPATCH_ALL_TYPES_AND2(kHalf, kBFloat16, iter.dtype(), "arange_cpu", [&]() {
-    using accscalar_t = at::acc_type<scalar_t, false>;
-    auto start = scalar_start.to<accscalar_t>();
-    auto steps = scalar_steps.to<accscalar_t>();
-    auto step = scalar_step.to<accscalar_t>();
-    at::parallel_for(0, steps, internal::GRAIN_SIZE, [&](int64_t p_begin, int64_t p_end) {
-      int64_t idx(p_begin);
-      TensorIterator it(iter);
-      cpu_serial_kernel_vec(
-          it,
-          [start, step, &idx]() -> scalar_t {
-            return start + step * (idx++);
-          },
-          [start, step, &idx]() -> Vectorized<scalar_t> {
-            Vectorized<scalar_t> res;
-            res = Vectorized<scalar_t>::arange(start + step * idx, step);
-            idx += Vectorized<scalar_t>::size();
-            return res;
-          }, {p_begin, p_end});
+  if(isComplexType(iter.dtype())) {
+    AT_DISPATCH_COMPLEX_TYPES_AND(kComplexHalf, iter.dtype(), "arange_cpu", [&](){
+      auto start = scalar_start.to<scalar_t>();
+      auto steps = scalar_steps.to<int64_t>();
+      auto step = scalar_step.to<scalar_t>();
+      at::parallel_for(0, steps, internal::GRAIN_SIZE, [&](int64_t p_begin, int64_t p_end) {
+        scalar_t idx(p_begin);
+        TensorIterator it(iter);
+        cpu_serial_kernel(
+            it,
+            [start, step, &idx]() -> scalar_t {
+              auto term = start + step * (idx);
+              idx+=static_cast<scalar_t>(1);
+              return term;
+            }, {p_begin, p_end});
+      });
     });
-  });
+    } else {
+    AT_DISPATCH_ALL_TYPES_AND2(kHalf, kBFloat16, iter.dtype(), "arange_cpu", [&]() {
+      using accscalar_t = at::acc_type<scalar_t, false>;
+      auto start = scalar_start.to<accscalar_t>();
+      auto steps = scalar_steps.to<accscalar_t>();
+      auto step = scalar_step.to<accscalar_t>();
+      at::parallel_for(0, steps, internal::GRAIN_SIZE, [&](int64_t p_begin, int64_t p_end) {
+        int64_t idx(p_begin);
+        TensorIterator it(iter);
+        cpu_serial_kernel_vec(
+            it,
+            [start, step, &idx]() -> scalar_t {
+              return start + step * (idx++);
+            },
+            [start, step, &idx]() -> Vectorized<scalar_t> {
+              Vectorized<scalar_t> res;
+              res = Vectorized<scalar_t>::arange(start + step * idx, step);
+              idx += Vectorized<scalar_t>::size();
+              return res;
+            }, {p_begin, p_end});
+      });
+    });
+  }
 }
 
 void linspace_kernel(TensorIterator& iter, const Scalar& scalar_start, const Scalar& scalar_end, int64_t steps) {
